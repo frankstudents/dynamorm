@@ -11,7 +11,7 @@
     "lint": "eslint src",
     "test": "jest",
     "watch": "webpack -w -d",
-    "install": "npm run build"
+    "prepublish": "npm run build"
   },
   "devDependencies": {
     "babel-core": "^6.24.0",
