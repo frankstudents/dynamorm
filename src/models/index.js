@@ -1,4 +1,4 @@
-import { DbModel, Model } from './model'
+import { DbModel, Model } from './models'
 
 export {
   DbModel,
