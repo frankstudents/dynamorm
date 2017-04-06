@@ -1,12 +1,15 @@
+const nodeExternals = require('webpack-node-externals')
 const path = require('path')
 
 
 module.exports = {
+  externals: [nodeExternals()],
   entry: path.resolve(__dirname, 'src/index.js'),
   devtool: 'source-map',
   output: {
-    path: path.resolve(__dirname, 'dist'),
-    filename: 'index.js'
+    filename: 'index.js',
+    libraryTarget: 'commonjs',
+    path: path.resolve(__dirname, 'dist')
   },
   resolve: {
     extensions: ['.js']
