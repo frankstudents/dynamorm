@@ -1,167 +1,105 @@
+import t from 'tcomb'
+
 import { DbModel, Model } from '../src/models'
-import { TextField } from '../src/fields'
 
 
 class MockModel extends Model {
-  constructor(options) {
-    const fields = {
-      keyField: new TextField(),
-      myTextField: new TextField(),
-      nullableField: new TextField({ allowNil: true })
-    }
-    super(fields, options)
+  constructor(initialValues={}) {
+    const schema = t.struct({
+      keyField: t.String,
+      myTextField: t.String,
+      optionalField: t.maybe(t.String)
+    }, 'MockModel')
+    super(schema, initialValues)
   }
 }
 
 class MockDbModel extends DbModel {
-  constructor(options) {
-    const fields = {
-      keyField: new TextField({ hashKey: true }),
-      myTextField: new TextField(),
-      nullableField: new TextField({ allowNil: true })
-    }
-    super(fields, options)
+  constructor(initialValues={}) {
+    const schema = t.struct({
+      keyField: t.String,
+      myTextField: t.String,
+      optionalField: t.maybe(t.String)
+    }, 'MockDbModel')
+
+    super(schema, initialValues)
+
+    this.tableName = process.env.DYNAMODB_TABLE
+    this.partitionKey = 'keyField'
   }
 }
 
-MockDbModel.tableName = 'CUSTOM_TABLE_NAME'
+const KEY_FIELD_VALUE = 'KEY_FIELD_VALUE'
+const TEXT_FIELD_VALUE = 'TEXT_FIELD_VALUE'
 
 test('Model field value setting and changing works', () => {
   const model = new MockModel()
-  const KEY_FIELD_VALUE = 'KEY_FIELD_VALUE'
-  const TEXT_FIELD_VALUE = 'TEXT_FIELD_VALUE'
 
-  model.set({
+  model.populate({
     keyField: KEY_FIELD_VALUE,
-    myTextField: TEXT_FIELD_VALUE,
-    nullableField: null
+    myTextField: TEXT_FIELD_VALUE
   })
  
-  expect(model.get()).toEqual({
+  expect(model.getAttributes()).toEqual({
     keyField: KEY_FIELD_VALUE,
-    myTextField: TEXT_FIELD_VALUE,
-    nullableField: null
+    myTextField: TEXT_FIELD_VALUE
   })
 
-  expect(model.get('nullableField', 'myTextField')).toEqual({
-    myTextField: TEXT_FIELD_VALUE,
-    nullableField: null
-  })
+  expect(model.optionalField).toBe(undefined)
 
-  const { nullableField } = model.get('nullableField')
-  expect(nullableField).toBe(null)
-
-  expect(() => {
-    model.get('A FIELD THAT DOESN\'T EXIST!')
-  }).toThrowError('Field A FIELD THAT DOESN\'T EXIST! not found.')
-
-  expect(() => {
-    model.set({ nonExistantField: true })
-  }).toThrowError('No such field: nonExistantField')
-
-  model.set({
+  model.populate({
     keyField: TEXT_FIELD_VALUE,
     myTextField: KEY_FIELD_VALUE
   })
 
-  expect(model.get()).toEqual({
+  expect(model.getAttributes()).toEqual({
     keyField: TEXT_FIELD_VALUE,
     myTextField: KEY_FIELD_VALUE,
-    nullableField: null
+    optionalField: undefined
   })
+
 })
 
 test('DbModel initial value setting works', () => {
-  const KEY_FIELD_VALUE = 'KEY_FIELD_VALUE'
-  const TEXT_FIELD_VALUE = 'TEXT_FIELD_VALUE'
   const model = new MockDbModel({
     keyField: KEY_FIELD_VALUE,
-    myTextField: TEXT_FIELD_VALUE,
-    nullableField: null
+    myTextField: TEXT_FIELD_VALUE  
   })
 
-  expect(model.get()).toEqual({
+  expect(model.getAttributes()).toEqual({
     keyField: KEY_FIELD_VALUE,
-    myTextField: TEXT_FIELD_VALUE,
-    nullableField: null
+    myTextField: TEXT_FIELD_VALUE
   })
 })
 
 test('Model validation works', () => {
   const model = new MockModel()
-  const KEY_FIELD_VALUE = 'KEY_FIELD_VALUE'
-  const TEXT_FIELD_VALUE = 'TEXT_FIELD_VALUE'
 
-  model.set({
-    keyField: KEY_FIELD_VALUE,
-    myTextField: TEXT_FIELD_VALUE,
-    nullableField: null
-  })
- 
-  expect(model.validate()).toBe(true)
-
-  model.set({
-    nullableField: 123
-  })
-
-  expect(model.validate()).toBe(false)
-
-  expect(model.getValidationErrors()).toEqual([
-    {
-      name: 'nullableField',
-      errors: ['Needs to be a string'],
-      value: 123
-    }
-  ])
-})
-
-test('Model saving works', async () => {
-  const model = new MockDbModel()
-  const KEY_FIELD_VALUE = 'KEY_FIELD_VALUE'
-  const TEXT_FIELD_VALUE = 'TEXT_FIELD_VALUE'
-  
-  expect(MockDbModel.getTableName()).toBe('CUSTOM_TABLE_NAME')
-
-  model.dbSave().catch((e) => {
-    expect(e).toBe('Invalid field data')
-  })
-
-  try {
-    await model.dbSave()
-  } catch(e) {
-    expect(e).toBe('Invalid field data')
-  }
-
-  expect(model.getValidationErrors()).toEqual(
-    [
-      {
-        name: 'keyField',
-        errors: [
-          'Needs to be a string'
-        ],
-        value: undefined
-      },
-      {
-        name: 'myTextField',
-        errors: [
-          'Needs to be a string'
-        ],
-        value: undefined
-      }
-    ]
-  )
-
-  model.set({
+  model.populate({
     keyField: KEY_FIELD_VALUE,
     myTextField: TEXT_FIELD_VALUE
   })
+  expect(model.validate()).toBe(true)
 
-  try {
-    const r = await model.dbSave()
-    expect(r).toBe('SAVED!')
-  } catch(e) {
-    e
-  }
+  model.populate({
+    optionalField: 123,
+    keyField: null
+  })
 
+  expect(model.validate()).toBe(false)
+  expect(model.getValidationErrors()[0]).toBe('[tcomb] Invalid value null supplied to MockModel/keyField: String')
+
+  model.populate({
+    keyField: KEY_FIELD_VALUE
+  })
+  expect(model.validate()).toBe(false)
+  expect(model.getValidationErrors()[0]).toBe('[tcomb] Invalid value 123 supplied to MockModel/optionalField: ?String')
+
+  const anotherModel = new MockModel({
+    keyField: KEY_FIELD_VALUE,
+    myTextField: TEXT_FIELD_VALUE
+  })
+  anotherModel.validate()
+  expect(anotherModel.validate()).toBe(true)
 })
 

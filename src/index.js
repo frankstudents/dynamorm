@@ -1,9 +1,8 @@
-// import { Model } from './models'
+import { DbModel, Model } from './models'
 
 
-// export default Model
-
-export default function MyFunc() {
-  console.log('X-D')
+export {
+  DbModel,
+  Model
 }
 
