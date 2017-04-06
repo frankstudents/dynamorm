@@ -24,8 +24,8 @@ class MockDbModel extends DbModel {
 
     super(schema, initialValues)
 
-    this.setTableName(process.env.DYNAMODB_TABLE)
-    this.setPartitionKey('keyField')
+    this.tableName = process.env.DYNAMODB_TABLE
+    this.partitionKey = 'keyField'
   }
 }
 
@@ -87,13 +87,13 @@ test('Model validation works', () => {
   })
 
   expect(model.validate()).toBe(false)
-  expect(model.errorMessage).toBe('[tcomb] Invalid value null supplied to MockModel/keyField: String')
+  expect(model.getValidationErrors()[0]).toBe('[tcomb] Invalid value null supplied to MockModel/keyField: String')
 
   model.populate({
     keyField: KEY_FIELD_VALUE
   })
   expect(model.validate()).toBe(false)
-  expect(model.errorMessage).toBe('[tcomb] Invalid value 123 supplied to MockModel/optionalField: ?String')
+  expect(model.getValidationErrors()[0]).toBe('[tcomb] Invalid value 123 supplied to MockModel/optionalField: ?String')
 
   const anotherModel = new MockModel({
     keyField: KEY_FIELD_VALUE,
@@ -101,6 +101,5 @@ test('Model validation works', () => {
   })
   anotherModel.validate()
   expect(anotherModel.validate()).toBe(true)
-  expect(anotherModel.errorMessage).toBe(null)
 })
 
