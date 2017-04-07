@@ -9,7 +9,7 @@
   "scripts": {
     "build": "webpack -p",
     "lint": "eslint src",
-    "test": "jest",
+    "test": "project=MyProject stage=MyStage jest",
     "watch": "webpack -w -d",
     "prepublish": "npm run build"
   },
