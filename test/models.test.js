@@ -24,7 +24,20 @@ class MockDbModel extends DbModel {
 
     super(schema, initialValues)
 
-    this.tableName = process.env.DYNAMODB_TABLE
+    this.tableName = 'custom-table-name'
+    this.partitionKey = 'keyField'
+  }
+}
+
+class MockDbModelWithoutTableName extends DbModel {
+  constructor(initialValues={}) {
+    const schema = t.struct({
+      keyField: t.String,
+      myTextField: t.String,
+      optionalField: t.maybe(t.String)
+    }, 'MockDbModel')
+
+    super(schema, initialValues)
     this.partitionKey = 'keyField'
   }
 }
@@ -101,5 +114,13 @@ test('Model validation works', () => {
   })
   anotherModel.validate()
   expect(anotherModel.validate()).toBe(true)
+})
+
+test('Model tableName is generatable and settable', () => {
+  const model = new MockDbModelWithoutTableName({
+    keyField: KEY_FIELD_VALUE,
+    myTextField: TEXT_FIELD_VALUE
+  })
+  expect(model._tableName).toBe('MyProject-MyStage-MockDbModelWithoutTableName')
 })
 

@@ -1,7 +1,7 @@
 {
   "name": "dynamorm",
   "description": "A DynamoDB ORM inspired by Django's ORM",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "main": "dist/index.js",
   "repository": "https://github.com/relicode/dynamorm",
   "author": "Anssi Herranen <anssi.herranen@gmail.com>",
@@ -9,7 +9,7 @@
   "scripts": {
     "build": "webpack -p",
     "lint": "eslint src",
-    "test": "jest",
+    "test": "project=MyProject stage=MyStage jest",
     "watch": "webpack -w -d",
     "prepublish": "npm run build"
   },
