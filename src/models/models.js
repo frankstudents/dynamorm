@@ -205,14 +205,16 @@ export class DbModel extends Model {
    * 
    * @param {String} expression The expression to query items by.
    * @param {Object} values The values to replace in the expression.
+   * @param {Object} opts Optional options object for the query.
    * 
    * @returns {Promise<Array>}
    */
-  static async findAllBy(expression, values) {
+  static async findAllBy(expression, values, opts={}) {
     const model = new this()
     const options = { 
-      KeyConditionExpression: expression, 
-      ExpressionAttributeValues: values 
+      KeyConditionExpression: expression,
+      ExpressionAttributeValues: values,
+      ...opts
     }
 
     const items = await DbModel._queryItems(model, options)
